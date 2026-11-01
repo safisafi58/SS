@@ -7,7 +7,8 @@ import 'package:flutter/material.dart';
 
 import '../services/services.dart';
 import '../theme/app_theme.dart';
-import 'app_routes.dart';
+import '../widgets/common.dart';
+import 'home_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -56,9 +57,7 @@ class _SplashScreenState extends State<SplashScreen> {
                     ),
                   ],
                 ),
-                child: const Center(
-                  child: Icon(Icons.auto_awesome, color: Colors.white, size: 52),
-                ),
+                child: const Icon(Icons.auto_awesome, color: Colors.white, size: 52),
               ),
               const SizedBox(height: 28),
               const Text(
