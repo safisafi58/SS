@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import '../data/models.dart';
 import '../data/repository.dart';
 import '../services/services.dart';
+import '../state/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
 
@@ -34,6 +35,7 @@ class _SearchScreenState extends State<SearchScreen> {
     super.initState();
     _searchCtrl.text = widget.initialQuery ?? '';
     _query = _searchCtrl.text;
+    _searchCtrl.addListener(() => setState(() {}));
     _load();
   }
 
@@ -80,7 +82,7 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   List<Category> get _categoryResults {
-    if (_query.isEmpty || _filter != 1) return [];
+    if (_query.isEmpty) return [];
     final q = _query.toLowerCase();
     return _categories.where((c) => c.name.toLowerCase().contains(q)).toList();
   }
@@ -109,21 +111,13 @@ class _SearchScreenState extends State<SearchScreen> {
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
-                if (!widget.embedded)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 56, 16, 8),
-                    child: _searchField(),
-                  )
-                else
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                    child: _searchField(),
-                  ),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(16, widget.embedded ? 8 : 56, 16, 8),
+                  child: _searchField(),
+                ),
                 _filterChips(),
                 Expanded(
-                  child: _query.isEmpty
-                      ? _buildSuggestions(state)
-                      : _buildResults(),
+                  child: _query.isEmpty ? _buildSuggestions(state) : _buildResults(),
                 ),
               ],
             ),
@@ -184,20 +178,23 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  Widget _buildSuggestions(AppStateLike state) {
+  Widget _buildSuggestions(AppState state) {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
         if (state.recentSearches.isNotEmpty) ...[
           Row(
             children: [
-              const Expanded(child: Text('Recent Searches', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15))),
+              const Expanded(
+                  child: Text('Recent Searches',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15))),
               TextButton(
                 onPressed: () async {
-                  await AppServices.state.clearSearchHistory();
+                  await state.clearSearchHistory();
                   setState(() {});
                 },
-                child: const Text('Clear History', style: TextStyle(color: AppColors.danger, fontSize: 12)),
+                child: const Text('Clear History',
+                    style: TextStyle(color: AppColors.danger, fontSize: 12)),
               ),
             ],
           ),
@@ -214,7 +211,8 @@ class _SearchScreenState extends State<SearchScreen> {
           ),
           const SizedBox(height: 12),
         ],
-        const Text('Popular Searches', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+        const Text('Popular Searches',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
         ...['Portrait', 'Anime', 'Cars', 'Nature', 'Luxury'].map(
           (s) => ListTile(
             dense: true,
@@ -227,11 +225,13 @@ class _SearchScreenState extends State<SearchScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        const Text('Trending Searches', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+        const Text('Trending Searches',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: ['Neon', 'Cinematic', 'Warrior', 'Lion', 'Wedding', 'Gaming', 'Fantasy'].map((s) {
+          children:
+              ['Neon', 'Cinematic', 'Warrior', 'Lion', 'Wedding', 'Gaming', 'Fantasy'].map((s) {
             return ActionChip(
               label: Text(s, style: const TextStyle(fontSize: 12)),
               onPressed: () {
@@ -264,7 +264,13 @@ class _SearchScreenState extends State<SearchScreen> {
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: categories.map((c) => ActionChip(label: Text(c.name), onPressed: () {})).toList(),
+            children: categories
+                .map((c) => ActionChip(
+                      label: Text(c.name),
+                      onPressed: () => Navigator.of(context)
+                          .pushNamed('/category-details', arguments: c),
+                    ))
+                .toList(),
           ),
           const SizedBox(height: 16),
         ],
@@ -289,10 +295,4 @@ class _SearchScreenState extends State<SearchScreen> {
       ],
     );
   }
-}
-
-/// Small interface so the suggestions builder can read history without
-/// depending on the concrete state class.
-abstract class AppStateLike {
-  List<String> get recentSearches;
 }
