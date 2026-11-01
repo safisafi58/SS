@@ -1,0 +1,47 @@
+rules_version = '2';
+
+// AI PROMPT — Firestore Security Rules
+// Public app: READ-ONLY for all users. WRITE: only admin auth.
+// Regular users can NEVER upload, edit, delete, feature or create content.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAdmin() {
+      return request.auth != null &&
+        request.auth.token.admin == true; // custom admin claim set via admin SDK
+    }
+
+    match /prompts/{promptId} {
+      allow read: if resource.data.published == true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /featured/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /prompt_stats/{promptId} {
+      // Increment-only writes: users may ONLY bump counters, nothing else.
+      allow update: if request.resource.data.diff(resource.data)
+        .affectedKeys().hasOnly(['views', 'copies'])
+        && request.resource.data.views >= resource.data.views
+        && request.resource.data.copies >= resource.data.copies;
+      allow read: if true;
+    }
+
+    match /{document=**} {
+      allow read, write: if false; // deny everything else
+    }
+  }
+}
