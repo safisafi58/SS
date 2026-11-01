@@ -1,12 +1,16 @@
 
-name: Build APK
+name: Build APK (AI PROMPT)
 
 on:
   push:
     branches:
       - main
-      - feature/vin-prompt
+      - feature/ai-prompt
+
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   build:
@@ -27,21 +31,95 @@ jobs:
         with:
           channel: stable
           flutter-version: '3.24.0'
+          cache: true
 
       - name: Check Flutter
         run: flutter doctor -v
 
+      - name: Check project files
+        run: |
+          if [ ! -f pubspec.yaml ]; then
+            echo "ERROR: pubspec.yaml not found!"
+            exit 1
+          fi
+
+          if [ ! -f lib/main.dart ]; then
+            echo "ERROR: lib/main.dart not found!"
+            exit 1
+          fi
+
       - name: Create Android platform files
-        run: flutter create --platforms=android --org com.safisafi --project-name vin_prompt .
+        run: |
+          flutter create \
+            --no-pub \
+            --platforms=android \
+            --org com.safisafi \
+            --project-name ai_prompt .
+
+      - name: Configure Android Manifest
+        run: |
+          cat > android/app/src/main/AndroidManifest.xml <<'EOF'
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+              <uses-permission android:name="android.permission.INTERNET"/>
+
+              <application
+                  android:label="AI PROMPT"
+                  android:name="${applicationName}"
+                  android:icon="@mipmap/ic_launcher">
+
+                  <activity
+                      android:name=".MainActivity"
+                      android:exported="true"
+                      android:launchMode="singleTop"
+                      android:theme="@style/LaunchTheme"
+                      android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+                      android:hardwareAccelerated="true"
+                      android:windowSoftInputMode="adjustResize">
+
+                      <meta-data
+                          android:name="io.flutter.embedding.android.NormalTheme"
+                          android:resource="@style/NormalTheme"/>
+
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN"/>
+                          <category android:name="android.intent.category.LAUNCHER"/>
+                      </intent-filter>
+
+                  </activity>
+
+                  <meta-data
+                      android:name="flutterEmbedding"
+                      android:value="2"/>
+
+              </application>
+          </manifest>
+          EOF
+
+      - name: Set Minimum Android SDK
+        run: |
+          if [ -f android/app/build.gradle.kts ]; then
+            sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 24/g' android/app/build.gradle.kts
+          elif [ -f android/app/build.gradle ]; then
+            sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 24/g' android/app/build.gradle
+          else
+            echo "ERROR: Android Gradle file not found!"
+            exit 1
+          fi
 
       - name: Get dependencies
         run: flutter pub get
 
-      - name: Build release APK
+      - name: Analyze code
+        run: flutter analyze --no-pub
+
+      - name: Build Release APK
         run: flutter build apk --release
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: vin-prompt-apk
+          name: AI-PROMPT-APK
           path: build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
+          retention-days: 14
