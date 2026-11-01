@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - feature/vin-prompt
   workflow_dispatch:
 
 jobs:
@@ -31,7 +32,7 @@ jobs:
         run: flutter doctor -v
 
       - name: Create Android platform files
-        run: flutter create --platforms=android --org com.safisafi --project-name ss_calculator .
+        run: flutter create --platforms=android --org com.safisafi --project-name vin_prompt .
 
       - name: Get dependencies
         run: flutter pub get
@@ -42,5 +43,5 @@ jobs:
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ss-calculator-apk
+          name: vin-prompt-apk
           path: build/app/outputs/flutter-apk/app-release.apk
