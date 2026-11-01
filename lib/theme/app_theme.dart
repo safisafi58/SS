@@ -4,11 +4,11 @@ library;
 import 'package:flutter/material.dart';
 
 class AppColors {
-  static const Color background = Color(0xFF0A0E21); // dark navy
+  static const Color background = Color(0xFF0A0E21);
   static const Color surface = Color(0xFF141936);
   static const Color surfaceHigh = Color(0xFF1D2447);
-  static const Color primary = Color(0xFF7C4DFF); // purple
-  static const Color accent = Color(0xFF2979FF); // electric blue
+  static const Color primary = Color(0xFF7C4DFF);
+  static const Color accent = Color(0xFF2979FF);
   static const Color textPrimary = Color(0xFFEDEFFF);
   static const Color textSecondary = Color(0xFF9FA8DA);
   static const Color divider = Color(0xFF232A4D);
@@ -43,32 +43,32 @@ class AppTheme {
           fontWeight: FontWeight.bold,
         ),
       ),
-      cardTheme: CardThemeData(
+      cardTheme: const CardThemeData(
         color: AppColors.surface,
         elevation: 0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
-      inputDecorationTheme: InputDecorationTheme(
+      inputDecorationTheme: const InputDecorationTheme(
         filled: true,
         fillColor: AppColors.surface,
-        hintStyle: const TextStyle(color: AppColors.textSecondary),
+        hintStyle: TextStyle(color: AppColors.textSecondary),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide.none,
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       ),
-      snackBarTheme: SnackBarThemeData(
+      snackBarTheme: const SnackBarThemeData(
         backgroundColor: AppColors.surfaceHigh,
-        contentTextStyle: const TextStyle(color: AppColors.textPrimary),
+        contentTextStyle: TextStyle(color: AppColors.textPrimary),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
-      navigationBarTheme: NavigationBarThemeData(
+      navigationBarTheme: const NavigationBarThemeData(
         backgroundColor: AppColors.surface,
-        indicatorColor: AppColors.primary.withOpacity(0.25),
+        indicatorColor: Color(0x3F7C4DFF),
         labelTextStyle: WidgetStatePropertyAll(
-          const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+          TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
         ),
       ),
       dividerColor: AppColors.divider,
