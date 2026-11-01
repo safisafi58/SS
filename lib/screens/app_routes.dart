@@ -1,4 +1,4 @@
-/// Central route table for the AI PROMPT app.
+/// Central route table and bottom navigation shell for the AI PROMPT app.
 library;
 
 import 'package:flutter/material.dart';
@@ -9,7 +9,6 @@ import 'category_details_screen.dart';
 import 'contact_screen.dart';
 import 'favorites_screen.dart';
 import 'fullscreen_image_screen.dart';
-import 'home_shell.dart';
 import 'latest_prompts_screen.dart';
 import 'more_menu.dart';
 import 'notifications_screen.dart';
