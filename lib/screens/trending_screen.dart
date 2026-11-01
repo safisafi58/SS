@@ -17,15 +17,19 @@ class TrendingScreen extends StatefulWidget {
   State<TrendingScreen> createState() => _TrendingScreenState();
 }
 
-class _TrendingScreenState extends State<TrendingScreen> {
+class _TrendingScreenState extends State<TrendingScreen>
+    with SingleTickerProviderStateMixin {
   final _repo = DemoPromptRepository();
   List<Prompt> _all = [];
   bool _loading = true;
-  int _tab = 0; // 0 today, 1 week, 2 month, 3 all time
+  late final TabController _tabCtrl;
+
+  static const _periods = [1, 7, 30, 3650]; // days
 
   @override
   void initState() {
     super.initState();
+    _tabCtrl = TabController(length: 4, vsync: this);
     _load();
   }
 
@@ -44,57 +48,50 @@ class _TrendingScreenState extends State<TrendingScreen> {
     return views + copies * 3;
   }
 
-  List<Prompt> get _ranked {
+  List<Prompt> _rankedFor(int tabIndex) {
     final now = DateTime.now();
-    int maxAge;
-    switch (_tab) {
-      case 0:
-        maxAge = 1;
-      case 1:
-        maxAge = 7;
-      case 2:
-        maxAge = 30;
-      default:
-        maxAge = 3650;
-    }
-    var list = _all.where((p) => now.difference(p.publishedDate).inDays <= maxAge).toList();
+    final maxAge = _periods[tabIndex];
+    var list =
+        _all.where((p) => now.difference(p.publishedDate).inDays <= maxAge).toList();
     list.sort((a, b) => _score(b).compareTo(_score(a)));
     return list;
+  }
+
+  @override
+  void dispose() {
+    _tabCtrl.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('Trending')),
+      appBar: AppBar(
+        title: const Text('Trending'),
+        bottom: TabBar(
+          controller: _tabCtrl,
+          isScrollable: true,
+          tabAlignment: TabAlignment.start,
+          labelColor: AppColors.textPrimary,
+          indicatorColor: AppColors.accent,
+          tabs: const [
+            Tab(text: 'Today'),
+            Tab(text: 'This Week'),
+            Tab(text: 'This Month'),
+            Tab(text: 'All Time'),
+          ],
+        ),
+      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                TabBar(
-                  isScrollable: true,
-                  tabAlignment: TabAlignment.start,
-                  labelColor: AppColors.textPrimary,
-                  indicatorColor: AppColors.accent,
-                  tabs: const [
-                    Tab(text: 'Today'),
-                    Tab(text: 'This Week'),
-                    Tab(text: 'This Month'),
-                    Tab(text: 'All Time'),
-                  ],
-                ),
-                Expanded(
-                  child: IndexedStack(
-                    index: _tab,
-                    children: List.generate(4, (i) {
-                      // rebuild on tab change
-                      return _RankedList(ranked: _tab == i ? _ranked : _ranked);
-                    }),
-                  ),
-                ),
-              ],
+          : TabBarView(
+              controller: _tabCtrl,
+              children: List.generate(
+                4,
+                (i) => _RankedList(ranked: _rankedFor(i)),
+              ),
             ),
-      bottomNavigationBar: null,
     );
   }
 }
@@ -126,7 +123,6 @@ class _RankedList extends StatelessWidget {
               height: 110,
               child: Row(
                 children: [
-                  // Rank number
                   Container(
                     width: 44,
                     alignment: Alignment.center,
@@ -156,21 +152,29 @@ class _RankedList extends StatelessWidget {
                               style: const TextStyle(fontWeight: FontWeight.bold)),
                           const SizedBox(height: 4),
                           Text(
-                            '${p.views + AppServices.state.localViews(p.id)} views • ${p.copies + AppServices.state.localCopies(p.id)} copies • ${p.favorites} favs',
-                            style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                            '${p.views + AppServices.state.localViews(p.id)} views • '
+                            '${p.copies + AppServices.state.localCopies(p.id)} copies • '
+                            '${p.favorites} favs',
+                            style: const TextStyle(
+                                fontSize: 11, color: AppColors.textSecondary),
                           ),
                           const Spacer(),
                           Row(
                             children: [
                               IconButton(
                                 visualDensity: VisualDensity.compact,
-                                icon: const Icon(Icons.copy, color: AppColors.accent, size: 20),
+                                icon: const Icon(Icons.copy,
+                                    color: AppColors.accent, size: 20),
                                 tooltip: 'Copy prompt',
-                                onPressed: () => AppServices.copyPrompt(context, p.id, p.promptText),
+                                onPressed: () =>
+                                    AppServices.copyPrompt(context, p.id, p.promptText),
                               ),
                               TextButton(
-                                onPressed: () => Navigator.of(context).pushNamed('/prompt-details', arguments: p),
-                                child: const Text('Details', style: TextStyle(color: AppColors.accent, fontSize: 12)),
+                                onPressed: () => Navigator.of(context)
+                                    .pushNamed('/prompt-details', arguments: p),
+                                child: const Text('Details',
+                                    style:
+                                        TextStyle(color: AppColors.accent, fontSize: 12)),
                               ),
                             ],
                           ),
@@ -185,20 +189,5 @@ class _RankedList extends StatelessWidget {
         );
       },
     );
-  }
-}
-
-// Tab switching handled by a small controller wrapper below.
-class TrendingTabsController extends StatefulWidget {
-  const TrendingTabsController({super.key});
-
-  @override
-  State<TrendingTabsController> createState() => _TrendingTabsControllerState();
-}
-
-class _TrendingTabsControllerState extends State<TrendingTabsController> {
-  @override
-  Widget build(BuildContext context) {
-    return const SizedBox.shrink();
   }
 }
