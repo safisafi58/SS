@@ -9,7 +9,6 @@ import '../data/repository.dart';
 import '../services/services.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common.dart';
-import 'app_routes.dart';
 
 class HomeTab extends StatefulWidget {
   const HomeTab({super.key});
@@ -31,6 +30,7 @@ class _HomeTabState extends State<HomeTab> {
   @override
   void initState() {
     super.initState();
+    _searchCtrl.addListener(() => setState(() {}));
     _load();
   }
 
@@ -45,7 +45,12 @@ class _HomeTabState extends State<HomeTab> {
         _loading = false;
       });
     } catch (e) {
-      if (mounted) setState(() => _offline = true);
+      if (mounted) {
+        setState(() {
+          _offline = true;
+          _loading = false;
+        });
+      }
     }
   }
 
@@ -121,7 +126,8 @@ class _HomeTabState extends State<HomeTab> {
             child: const Icon(Icons.auto_awesome, color: Colors.white, size: 22),
           ),
           const SizedBox(width: 10),
-          const Text('AI PROMPT', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          const Text('AI PROMPT',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           const Spacer(),
           IconButton(
             icon: const Icon(Icons.notifications_none_outlined),
@@ -155,8 +161,10 @@ class _HomeTabState extends State<HomeTab> {
                 ),
         ),
         onSubmitted: (v) {
-          Navigator.of(context).pushNamed('/shell');
-          Navigator.of(context).pushNamed('/search', arguments: v);
+          if (v.trim().isNotEmpty) {
+            AppServices.state.addRecentSearch(v);
+            Navigator.of(context).pushNamed('/search', arguments: v);
+          }
         },
       ),
     );
@@ -170,7 +178,11 @@ class _HomeTabState extends State<HomeTab> {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
-          child: SectionHeader(title: 'Featured', actionLabel: 'Explore All', onAction: () => Navigator.of(context).pushNamed('/latest')),
+          child: SectionHeader(
+              title: 'Featured',
+              actionLabel: 'Explore All',
+              onAction: () =>
+                  Navigator.of(context).pushNamed('/latest')),
         ),
         SizedBox(
           height: 200,
@@ -185,7 +197,8 @@ class _HomeTabState extends State<HomeTab> {
                 child: Card(
                   clipBehavior: Clip.antiAlias,
                   child: InkWell(
-                    onTap: () => Navigator.of(context).pushNamed('/prompt-details', arguments: p),
+                    onTap: () => Navigator.of(context)
+                        .pushNamed('/prompt-details', arguments: p),
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
@@ -195,7 +208,10 @@ class _HomeTabState extends State<HomeTab> {
                             gradient: LinearGradient(
                               begin: Alignment.bottomCenter,
                               end: Alignment.topCenter,
-                              colors: [Colors.black.withOpacity(0.9), Colors.transparent],
+                              colors: [
+                                Colors.black.withOpacity(0.9),
+                                Colors.transparent
+                              ],
                             ),
                           ),
                         ),
@@ -208,15 +224,17 @@ class _HomeTabState extends State<HomeTab> {
                             children: [
                               Text(p.title,
                                   style: const TextStyle(
-                                      fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white)),
                               const SizedBox(height: 8),
                               ElevatedButton.icon(
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.primary,
                                   foregroundColor: Colors.white,
                                 ),
-                                onPressed: () =>
-                                    Navigator.of(context).pushNamed('/prompt-details', arguments: p),
+                                onPressed: () => Navigator.of(context)
+                                    .pushNamed('/prompt-details', arguments: p),
                                 icon: const Icon(Icons.explore, size: 18),
                                 label: const Text('Explore'),
                               ),
@@ -260,7 +278,7 @@ class _HomeTabState extends State<HomeTab> {
           child: SectionHeader(
             title: 'Categories',
             actionLabel: 'See All',
-            onAction: () => _goToTab(1),
+            onAction: () => Navigator.of(context).pushNamed('/categories'),
           ),
         ),
         SizedBox(
@@ -281,11 +299,6 @@ class _HomeTabState extends State<HomeTab> {
     );
   }
 
-  void _goToTab(int index) {
-    // The shell handles tab switching; navigate to shell categories tab.
-    Navigator.of(context).pushNamed('/categories');
-  }
-
   Widget _buildTrending() {
     final trending = _prompts.where((p) => p.trending).toList();
     if (trending.isEmpty) return const SizedBox.shrink();
@@ -300,7 +313,7 @@ class _HomeTabState extends State<HomeTab> {
           ),
         ),
         SizedBox(
-          height: 210,
+          height: 230,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -312,7 +325,12 @@ class _HomeTabState extends State<HomeTab> {
                 child: PromptCard(
                   prompt: p,
                   categoryName: _categoryName(p.categoryId),
-                  onFavoriteTap: () => _toggleFav(p),
+                  onFavoriteTap: () {
+                    AppServices.state.toggleFavorite(p.id);
+                    setState(() {});
+                  },
+                  onCopyTap: () =>
+                      AppServices.copyPrompt(context, p.id, p.promptText),
                 ),
               );
             },
@@ -323,7 +341,8 @@ class _HomeTabState extends State<HomeTab> {
   }
 
   Widget _buildLatest() {
-    final latest = [..._prompts]..sort((a, b) => b.publishedDate.compareTo(a.publishedDate));
+    final latest = [..._prompts]
+      ..sort((a, b) => b.publishedDate.compareTo(a.publishedDate));
     return Column(
       children: [
         Padding(
@@ -335,7 +354,7 @@ class _HomeTabState extends State<HomeTab> {
           ),
         ),
         SizedBox(
-          height: 210,
+          height: 230,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -348,7 +367,8 @@ class _HomeTabState extends State<HomeTab> {
                   prompt: p,
                   categoryName: _categoryName(p.categoryId),
                   showNewBadge: true,
-                  onCopyTap: () => AppServices.copyPrompt(context, p.id, p.promptText),
+                  onCopyTap: () =>
+                      AppServices.copyPrompt(context, p.id, p.promptText),
                 ),
               );
             },
@@ -363,8 +383,8 @@ class _HomeTabState extends State<HomeTab> {
       ..sort((a, b) => (b.views + b.copies).compareTo(a.views + a.copies));
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
+        const Padding(
+          padding: EdgeInsets.fromLTRB(16, 20, 16, 12),
           child: SectionHeader(title: 'Popular This Week'),
         ),
         ListView.builder(
@@ -379,7 +399,8 @@ class _HomeTabState extends State<HomeTab> {
               child: PromptCard(
                 prompt: p,
                 categoryName: _categoryName(p.categoryId),
-                onCopyTap: () => AppServices.copyPrompt(context, p.id, p.promptText),
+                onCopyTap: () =>
+                    AppServices.copyPrompt(context, p.id, p.promptText),
               ),
             );
           },
@@ -388,8 +409,11 @@ class _HomeTabState extends State<HomeTab> {
     );
   }
 
-  String _categoryName(String id) =>
-      _categories.firstWhere((c) => c.id == id, orElse: () => Category(id: id, name: 'Unknown', imageUrl: '')).name;
+  String _categoryName(String id) => _categories
+      .where((c) => c.id == id)
+      .map((c) => c.name)
+      .followedBy(['Unknown'])
+      .first;
 
   void _toggleFav(Prompt p) {
     AppServices.state.toggleFavorite(p.id);
