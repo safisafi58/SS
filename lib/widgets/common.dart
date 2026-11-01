@@ -4,9 +4,8 @@ library;
 import 'package:flutter/material.dart';
 
 import '../data/models.dart';
-import '../theme/app_theme.dart';
 import '../services/services.dart';
-import '../screens/prompt_details_screen.dart';
+import '../theme/app_theme.dart';
 
 // ---------------------------------------------------------------------------
 // Prompt Card (grid / list)
@@ -33,7 +32,8 @@ class PromptCard extends StatelessWidget {
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: () => Navigator.of(context).pushNamed('/prompt-details', arguments: prompt),
+        onTap: () =>
+            Navigator.of(context).pushNamed('/prompt-details', arguments: prompt),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -78,21 +78,32 @@ class PromptCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                   ),
-                  const SizedBox(height: 4),
+                  if (categoryName.isNotEmpty)
+                    Text(
+                      categoryName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                          fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w600),
+                    ),
+                  const SizedBox(height: 6),
                   Row(
                     children: [
-                      const Icon(Icons.visibility, size: 12, color: AppColors.textSecondary),
+                      const Icon(Icons.visibility,
+                          size: 12, color: AppColors.textSecondary),
                       const SizedBox(width: 3),
                       Text(
                         '${prompt.views + AppServices.state.localViews(prompt.id)}',
-                        style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                        style: const TextStyle(
+                            fontSize: 11, color: AppColors.textSecondary),
                       ),
                       const SizedBox(width: 8),
                       const Icon(Icons.copy, size: 12, color: AppColors.textSecondary),
                       const SizedBox(width: 3),
                       Text(
                         '${prompt.copies + AppServices.state.localCopies(prompt.id)}',
-                        style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                        style: const TextStyle(
+                            fontSize: 11, color: AppColors.textSecondary),
                       ),
                       const Spacer(),
                       if (onCopyTap != null)
@@ -121,7 +132,8 @@ Widget _badge(String text, Color color) => Container(
       ),
       child: Text(
         text,
-        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
+        style: const TextStyle(
+            fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
       ),
     );
 
@@ -139,7 +151,8 @@ class CategoryCard extends StatelessWidget {
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: () => Navigator.of(context).pushNamed('/category-details', arguments: category),
+        onTap: () => Navigator.of(context)
+            .pushNamed('/category-details', arguments: category),
         child: SizedBox(
           width: 130,
           child: Column(
@@ -159,11 +172,13 @@ class CategoryCard extends StatelessWidget {
                       category.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 14),
                     ),
                     Text(
                       '${category.promptCount} prompts',
-                      style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                      style: const TextStyle(
+                          fontSize: 11, color: AppColors.textSecondary),
                     ),
                   ],
                 ),
@@ -232,7 +247,8 @@ class EmptyState extends StatelessWidget {
   final String title;
   final String subtitle;
 
-  const EmptyState({super.key, required this.icon, required this.title, required this.subtitle});
+  const EmptyState(
+      {super.key, required this.icon, required this.title, required this.subtitle});
 
   @override
   Widget build(BuildContext context) {
@@ -245,14 +261,15 @@ class EmptyState extends StatelessWidget {
             Container(
               width: 80,
               height: 80,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 gradient: AppColors.brandGradient,
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, color: Colors.white, size: 36),
             ),
             const SizedBox(height: 18),
-            Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(title,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Text(
               subtitle,
@@ -275,17 +292,21 @@ class SectionHeader extends StatelessWidget {
   final String? actionLabel;
   final VoidCallback? onAction;
 
-  const SectionHeader({super.key, required this.title, this.actionLabel, this.onAction});
+  const SectionHeader(
+      {super.key, required this.title, this.actionLabel, this.onAction});
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Expanded(child: Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
+        Expanded(
+            child: Text(title,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
         if (actionLabel != null)
           TextButton(
             onPressed: onAction,
-            child: Text(actionLabel!, style: const TextStyle(color: AppColors.accent)),
+            child: Text(actionLabel!,
+                style: const TextStyle(color: AppColors.accent)),
           ),
       ],
     );
@@ -310,7 +331,8 @@ class OfflineBanner extends StatelessWidget {
         children: [
           Icon(Icons.wifi_off, size: 16, color: AppColors.danger),
           SizedBox(width: 8),
-          Text('You are offline. Showing cached prompts.', style: TextStyle(fontSize: 12, color: AppColors.danger)),
+          Text('You are offline. Showing cached prompts.',
+              style: TextStyle(fontSize: 12, color: AppColors.danger)),
         ],
       ),
     );
