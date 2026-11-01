@@ -1,8 +1,14 @@
+/// Splash Screen: logo, AI PROMPT title, tagline, loading animation.
+library;
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-/// Splash screen: gradient background, ف logo, app name, then goes home.
+import '../services/services.dart';
+import '../theme/app_theme.dart';
+import 'app_routes.dart';
+
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -14,9 +20,15 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
+    _start();
+  }
+
+  Future<void> _start() async {
+    await AppServices.state.load();
+    if (!mounted) return;
     Timer(const Duration(seconds: 2), () {
       if (mounted) {
-        Navigator.of(context).pushReplacementNamed('/home');
+        Navigator.of(context).pushReplacementNamed('/shell');
       }
     });
   }
@@ -25,13 +37,7 @@ class _SplashScreenState extends State<SplashScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-            colors: [Color(0xFF9C1E6E), Color(0xFF7B2FF2)],
-          ),
-        ),
+        decoration: const BoxDecoration(gradient: AppColors.brandGradient),
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -40,50 +46,40 @@ class _SplashScreenState extends State<SplashScreen> {
                 width: 110,
                 height: 110,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.background,
                   borderRadius: BorderRadius.circular(28),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.25),
-                      blurRadius: 24,
-                      offset: const Offset(0, 8),
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 30,
+                      offset: const Offset(0, 10),
                     ),
                   ],
                 ),
                 child: const Center(
-                  child: Text(
-                    'ف',
-                    style: TextStyle(
-                      fontSize: 64,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF7B2FF2),
-                    ),
-                  ),
+                  child: Icon(Icons.auto_awesome, color: Colors.white, size: 52),
                 ),
               ),
               const SizedBox(height: 28),
               const Text(
-                'Vin Prompt',
+                'AI PROMPT',
                 style: TextStyle(
-                  fontSize: 34,
+                  fontSize: 36,
                   fontWeight: FontWeight.bold,
+                  letterSpacing: 2,
                   color: Colors.white,
-                  letterSpacing: 1.2,
                 ),
               ),
               const SizedBox(height: 8),
               const Text(
-                'ستاسو د فرمپټونو کتابتون',
-                style: TextStyle(fontSize: 16, color: Colors.white70),
+                'Create Beyond Imagination',
+                style: TextStyle(fontSize: 15, color: Colors.white70),
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 44),
               const SizedBox(
-                width: 32,
-                height: 32,
-                child: CircularProgressIndicator(
-                  color: Colors.white,
-                  strokeWidth: 3,
-                ),
+                width: 30,
+                height: 30,
+                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
               ),
             ],
           ),
