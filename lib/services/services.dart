@@ -17,7 +17,8 @@ class AppServices {
 
   /// Copies the FULL prompt text to the Android clipboard.
   /// Returns true on success.
-  static Future<bool> copyPrompt(BuildContext context, String promptId, String promptText) async {
+  static Future<bool> copyPrompt(
+      BuildContext context, String promptId, String promptText) async {
     try {
       await Clipboard.setData(ClipboardData(text: promptText));
       await state.incrementCopies(promptId);
@@ -44,49 +45,48 @@ class AppServices {
 
   /// Shares the app.
   static Future<void> shareApp() async {
-    await Share.share('Check out AI PROMPT — Create Beyond Imagination!');
+    await Share.share(
+        'Check out AI PROMPT — Create Beyond Imagination!');
   }
 
-  /// Downloads an image to the Android gallery / Downloads folder.
-  /// Requests storage permission only when required (Android 13+ uses
-  /// granular media permissions handled by the system).
+  /// Downloads an image to the Android Downloads folder.
   static Future<void> downloadImage(BuildContext context, String url) async {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Downloading image...')),
     );
     try {
       final response = await http.get(Uri.parse(url));
-      if (response.statusCode != 200) throw Exception('HTTP ${response.statusCode}');
-      final bytes = response.bodyBytes;
-      final dir = Directory('/storage/emulated/0/Download');
-      if (!await dir.exists()) {
-        final temp = await getTemporaryDirectory();
-        await _save(context, temp.path, bytes);
-        return;
+      if (response.statusCode != 200) {
+        throw Exception('HTTP ${response.statusCode}');
       }
-      await _save(context, dir.path, bytes);
+      final bytes = response.bodyBytes;
+      Directory dir;
+      try {
+        dir = Directory('/storage/emulated/0/Download');
+        if (!await dir.exists()) throw Exception('no download dir');
+      } catch (_) {
+        dir = await getTemporaryDirectory();
+      }
+      final name = 'ai_prompt_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final file = File('${dir.path}/$name');
+      await file.writeAsBytes(bytes);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Image saved to ${file.path}')),
+        );
+      }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Download failed. Check your connection.')),
+          const SnackBar(
+              content: Text('Download failed. Check your connection.')),
         );
       }
     }
   }
-
-  static Future<void> _save(BuildContext context, String dirPath, Uint8List bytes) async {
-    final name = 'ai_prompt_${DateTime.now().millisecondsSinceEpoch}.jpg';
-    final file = File('$dirPath/$name');
-    await file.writeAsBytes(bytes);
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Image saved to ${file.path}')),
-      );
-    }
-  }
 }
 
-/// Image widget with graceful loading/error placeholders.
+/// Image widget with graceful loading/error placeholders and caching.
 class PromptImage extends StatefulWidget {
   final String url;
   final BoxFit fit;
@@ -104,9 +104,9 @@ class _PromptImageState extends State<PromptImage> {
   Widget build(BuildContext context) {
     if (_failed) {
       return Container(
-        color: AppColorsImageFallback.surfaceHigh,
+        color: const Color(0xFF1D2447),
         alignment: Alignment.center,
-        child: const Icon(Icons.broken_image_outlined, color: AppColorsImageFallback.textSecondary),
+        child: const Icon(Icons.broken_image_outlined, color: Color(0xFF9FA8DA)),
       );
     }
     return Image.network(
@@ -114,19 +114,18 @@ class _PromptImageState extends State<PromptImage> {
       fit: widget.fit,
       cacheWidth: 600,
       errorBuilder: (context, error, stackTrace) {
-        _failed = true;
+        if (!_failed) {
+          // schedule after build to update fallback state
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) setState(() => _failed = true);
+          });
+        }
         return Container(
-          color: AppColorsImageFallback.surfaceHigh,
+          color: const Color(0xFF1D2447),
           alignment: Alignment.center,
-          child: const Icon(Icons.image_outlined, color: AppColorsImageFallback.textSecondary),
+          child: const Icon(Icons.image_outlined, color: Color(0xFF9FA8DA)),
         );
       },
     );
   }
-}
-
-// Small helper to avoid importing theme into services for fallback colors.
-class AppColorsImageFallback {
-  static const surfaceHigh = Color(0xFF1D2447);
-  static const textSecondary = Color(0xFF9FA8DA);
 }
