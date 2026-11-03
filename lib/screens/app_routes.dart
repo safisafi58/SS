@@ -9,6 +9,7 @@ import 'category_details_screen.dart';
 import 'contact_screen.dart';
 import 'favorites_screen.dart';
 import 'fullscreen_image_screen.dart';
+import 'home_screen.dart';
 import 'latest_prompts_screen.dart';
 import 'more_menu.dart';
 import 'notifications_screen.dart';
@@ -48,9 +49,9 @@ class _HomeShellState extends State<HomeShell> {
   int _index = 0;
 
   final _tabs = const [
-    _TabData('Home', Icons.home_outlined, Icons.home),
-    _TabData('Categories', Icons.category_outlined, Icons.category),
-    _TabData('Favorites', Icons.favorite_border, Icons.favorite),
+    _TabData('Home', Icons.home, Icons.home_outlined),
+    _TabData('Categories', Icons.category, Icons.category_outlined),
+    _TabData('Favorites', Icons.favorite, Icons.favorite_border),
     _TabData('Search', Icons.search),
   ];
 
