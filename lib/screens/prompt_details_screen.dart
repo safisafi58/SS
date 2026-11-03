@@ -211,7 +211,7 @@ class _PromptDetailsScreenState extends State<PromptDetailsScreen> {
               ),
               OutlinedButton.icon(
                 onPressed: () => setState(() => _textSelected = !_textSelected),
-                icon: Icon(_textSelected ? Icons.done : Icons.text_select, size: 18),
+                icon: Icon(_textSelected ? Icons.done : Icons.select_all, size: 18),
                 label: Text(_textSelected ? 'Selected' : 'Select Text'),
               ),
               OutlinedButton.icon(
