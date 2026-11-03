@@ -1,7 +1,4 @@
 /// App-wide state: favorites, recent searches, notifications and stats.
-///
-/// Favorites and recent searches are persisted locally with shared_preferences
-/// so they survive app restarts. No login is required.
 library;
 
 import 'dart:convert';
@@ -26,36 +23,41 @@ class AppState extends ChangeNotifier {
 
   Set<String> get favorites => _favorites;
   List<String> get recentSearches => _recentSearches;
-
   bool isFavorite(String promptId) => _favorites.contains(promptId);
-
   int localViews(String id) => _localStats[id]?['views'] ?? 0;
   int localCopies(String id) => _localStats[id]?['copies'] ?? 0;
-
   bool isNotificationRead(String id) => _readNotifications.contains(id);
-
-  // ---------------------------------------------------------------------------
-  // Persistence
-  // ---------------------------------------------------------------------------
 
   Future<void> load() async {
     if (loaded) return;
     final prefs = await SharedPreferences.getInstance();
     _favorites
       ..clear()
-      ..addAll((prefs.getStringList(_favoritesKey) ?? []).toSet());
+      ..addAll((prefs.getStringList(_favoritesKey) ?? <String>[]).toSet());
     _recentSearches
       ..clear()
-      ..addAll(prefs.getStringList(_searchesKey) ?? []);
+      ..addAll(prefs.getStringList(_searchesKey) ?? <String>[]);
     try {
-      final stats = jsonDecode(prefs.getString(_statsKey) ?? '{}') as Map<String, dynamic>;
-      _localStats
-        ..clear()
-        ..addAll(stats.map((k, v) => MapEntry(k, Map<String, int>.from((v as Map).map((k2, v2) => MapEntry(k2 as String, v2 as int)))));
-    } catch (_) {}
+      final decoded = jsonDecode(prefs.getString(_statsKey) ?? '{}');
+      if (decoded is Map) {
+        _localStats.clear();
+        for (final entry in decoded.entries) {
+          if (entry.value is Map) {
+            final values = <String, int>{};
+            for (final stat in (entry.value as Map).entries) {
+              final value = stat.value;
+              if (value is num) values[stat.key.toString()] = value.toInt();
+            }
+            _localStats[entry.key.toString()] = values;
+          }
+        }
+      }
+    } catch (_) {
+      _localStats.clear();
+    }
     _readNotifications
       ..clear()
-      ..addAll((prefs.getStringList(_notificationsKey) ?? []).toSet());
+      ..addAll((prefs.getStringList(_notificationsKey) ?? <String>[]).toSet());
     loaded = true;
     notifyListeners();
   }
@@ -68,16 +70,8 @@ class AppState extends ChangeNotifier {
     await prefs.setStringList(_notificationsKey, _readNotifications.toList());
   }
 
-  // ---------------------------------------------------------------------------
-  // Favorites
-  // ---------------------------------------------------------------------------
-
   Future<void> toggleFavorite(String promptId) async {
-    if (_favorites.contains(promptId)) {
-      _favorites.remove(promptId);
-    } else {
-      _favorites.add(promptId);
-    }
+    if (!_favorites.add(promptId)) _favorites.remove(promptId);
     notifyListeners();
     await _save();
   }
@@ -87,10 +81,6 @@ class AppState extends ChangeNotifier {
     notifyListeners();
     await _save();
   }
-
-  // ---------------------------------------------------------------------------
-  // Searches
-  // ---------------------------------------------------------------------------
 
   Future<void> addRecentSearch(String query) async {
     final q = query.trim();
@@ -111,27 +101,19 @@ class AppState extends ChangeNotifier {
     await _save();
   }
 
-  // ---------------------------------------------------------------------------
-  // Stats (local, merged with server/demo stats at display time)
-  // ---------------------------------------------------------------------------
-
   Future<void> incrementViews(String promptId) async {
-    final s = _localStats.putIfAbsent(promptId, () => {});
-    s['views'] = (s['views'] ?? 0) + 1;
+    final stats = _localStats.putIfAbsent(promptId, () => <String, int>{});
+    stats['views'] = (stats['views'] ?? 0) + 1;
     notifyListeners();
     await _save();
   }
 
   Future<void> incrementCopies(String promptId) async {
-    final s = _localStats.putIfAbsent(promptId, () => {});
-    s['copies'] = (s['copies'] ?? 0) + 1;
+    final stats = _localStats.putIfAbsent(promptId, () => <String, int>{});
+    stats['copies'] = (stats['copies'] ?? 0) + 1;
     notifyListeners();
     await _save();
   }
-
-  // ---------------------------------------------------------------------------
-  // Notifications
-  // ---------------------------------------------------------------------------
 
   Future<void> markNotificationRead(String id) async {
     _readNotifications.add(id);
@@ -140,9 +122,7 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> markAllNotificationsRead(List<NotificationItem> items) async {
-    for (final n in items) {
-      _readNotifications.add(n.id);
-    }
+    _readNotifications.addAll(items.map((item) => item.id));
     notifyListeners();
     await _save();
   }
