@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
-import 'app_routes.dart';
+import 'screens/app_routes.dart';
 import 'theme/app_theme.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const AiPromptApp());
 }
 
